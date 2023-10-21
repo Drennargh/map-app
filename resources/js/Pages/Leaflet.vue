@@ -5,11 +5,12 @@ import '@raruto/leaflet-elevation/src/index.js';
 import '@raruto/leaflet-elevation/src/index.css';
 
 const props = defineProps({
-    gpxFile: {
-        type: String,
+    tracks: {
+        type: Array,
         required: true,
     }
 });
+
 const data = reactive({
     map: null,
     elevationControl: null,
@@ -17,7 +18,7 @@ const data = reactive({
 });
 onMounted(() => {
     initMap();
-    loadGPX(props.gpxFile);
+    loadGPX(props.tracks);
 });
 
 function initMap() {
@@ -42,8 +43,12 @@ function initMap() {
 
 }
 
-function loadGPX(filename) {
-    data.elevationControl.load(filename);
+function loadGPX(fileNames) {
+    for (const originalFileName of fileNames) {
+        const fileName = `/tracks/${originalFileName}.gpx`;
+
+        data.elevationControl.load(fileName);
+    }
 }
 </script>
 

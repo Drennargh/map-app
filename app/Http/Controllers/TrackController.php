@@ -6,6 +6,7 @@ use App\Models\Track;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTrackRequest;
 use App\Http\Requests\UpdateTrackRequest;
+use Inertia\Inertia;
 
 class TrackController extends Controller
 {
@@ -14,7 +15,10 @@ class TrackController extends Controller
      */
     public function index()
     {
-        //
+        $tracks = Track::all()->map(function ($track) {
+            return $track->filename;
+        });
+        return  Inertia::render("Leaflet", compact("tracks"));
     }
 
     /**
