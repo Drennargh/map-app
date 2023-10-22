@@ -8,8 +8,6 @@
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-    {{-- Leaflet CSS --}}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
     {{-- Leaflet --}}
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
     <!-- Leaflet-UI -->

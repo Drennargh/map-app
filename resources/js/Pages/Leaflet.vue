@@ -1,8 +1,11 @@
 <script setup>
 import { reactive, onMounted, defineProps } from 'vue';
-// import L from 'leaflet';
-import '@raruto/leaflet-elevation/src/index.js';
-import '@raruto/leaflet-elevation/src/index.css';
+import '@raruto/leaflet-elevation/libs/leaflet-distance-marker.css';
+import '@raruto/leaflet-elevation/libs/leaflet-distance-marker.js';
+import '@raruto/leaflet-elevation/libs/leaflet-gpxgroup.js';
+import '@raruto/leaflet-elevation/dist/leaflet-elevation.min.css';
+import '@raruto/leaflet-elevation/dist/leaflet-elevation.min.js';
+
 
 const props = defineProps({
     tracks: {
@@ -25,17 +28,6 @@ data.opts = {
         fullscreenControl: false,
         searchControl: false,
         loadingControl: false,
-        plugins: [
-            "d3@7.8.4/dist/d3.min.js",
-            "@tmcw/togeojson@5.6.2/dist/togeojson.umd.js",
-            "leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js",
-            "leaflet-almostover@1.0.1/src/leaflet.almostover.js",
-            "@raruto/leaflet-elevation@2.5.0/libs/leaflet-distance-marker.css",
-            "@raruto/leaflet-elevation@2.5.0/libs/leaflet-distance-marker.js",
-            "@raruto/leaflet-elevation@2.5.0/dist/leaflet-elevation.min.css",
-            "@raruto/leaflet-elevation@2.5.0/dist/leaflet-elevation.min.js",
-            "@raruto/leaflet-elevation@2.5.0/libs/leaflet-gpxgroup.js",
-        ],
     },
     points: {
         icon: {
@@ -92,6 +84,7 @@ function loadGPX(fileNames) {
             legend: true,
             distanceMarkers: true,
         });
+        // remove chart-placeholder text
         data.map.on('eledata_added eledata_clear', ({ type }) => {
             let p = document.querySelector(".chart-placeholder");
             if (p) {
