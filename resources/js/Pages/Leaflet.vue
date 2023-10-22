@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, onMounted, defineProps } from 'vue';
-import L from 'leaflet';
+// import L from 'leaflet';
 import '@raruto/leaflet-elevation/src/index.js';
 import '@raruto/leaflet-elevation/src/index.css';
 
@@ -10,14 +10,49 @@ const props = defineProps({
         required: true,
     }
 });
-
 const data = reactive({
-    map: null,
-    elevationControl: null,
-    pointIcon: null,
+    opts: null,
     points: null,
-
+    map: null,
+    routes: null,
 });
+
+data.opts = {
+    map: {
+        center: [41.4583, 12.7059],
+        zoom: 5,
+        mapTypeId: 'topo',
+        fullscreenControl: false,
+        searchControl: false,
+        loadingControl: false,
+        plugins: [
+            "d3@7.8.4/dist/d3.min.js",
+            "@tmcw/togeojson@5.6.2/dist/togeojson.umd.js",
+            "leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js",
+            "leaflet-almostover@1.0.1/src/leaflet.almostover.js",
+            "@raruto/leaflet-elevation@2.5.0/libs/leaflet-distance-marker.css",
+            "@raruto/leaflet-elevation@2.5.0/libs/leaflet-distance-marker.js",
+            "@raruto/leaflet-elevation@2.5.0/dist/leaflet-elevation.min.css",
+            "@raruto/leaflet-elevation@2.5.0/dist/leaflet-elevation.min.js",
+            "@raruto/leaflet-elevation@2.5.0/libs/leaflet-gpxgroup.js",
+        ],
+    },
+    points: {
+        icon: {
+            iconUrl: 'images/elevation-point.png',
+            iconSize: [12, 12],
+        },
+    },
+    elevation: {
+        theme: "yellow-theme",
+        detached: true,
+        elevationDiv: '#elevation-div',
+        followMarker: true,
+        zFollow: 15,
+        legend: false,
+        srcFolder: 'http://unpkg.com/@raruto/leaflet-elevation/src/',
+    },
+};
 data.points = [
     { latlng: [47.5854438, 18.8260240], name: "Éles-kő" },
     { latlng: [47.5838863, 18.8235221], name: "Ilona-lak" },
@@ -37,59 +72,62 @@ data.points = [
     { latlng: [47.5372269, 18.8914775], name: "katonasírok" },
     { latlng: [47.5934486, 18.8812427], name: "Fülkés-kő" },
 ];
+
 onMounted(() => {
+    // Initialize the map
     initMap();
+    // Load GPX files
     loadGPX(props.tracks);
 });
-
 function initMap() {
-    data.map = L.map('map').setView([41.4583, 12.7059], 5);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        Id: 'topo',
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        attribution: '&copy; <a href="https://github.com/adoroszlai">Attila Doroszlai</a> (<a href="https://github.com/adoroszlai/joebed/blob/gh-pages/LICENSE.md">MIT License</a>)',
-    }).addTo(data.map);
-
-    data.pointIcon = L.icon({
-        iconUrl: 'images/elevation-point.png',
-        iconSize: [12, 12], // size of the icon
-    });
-    L.marker([51.5, -0.09], { icon: data.pointIcon }).addTo(data.map);
-    // Iterate through the points and add markers to the map
-    data.points.forEach(function (point) {
-        var marker = L.marker(point.latlng, { icon: data.pointIcon }).addTo(data.map);
-        marker.bindPopup(point.name);
-    });
-
-
-    data.elevationControl = L.control.elevation({
-        theme: 'yellow-theme',
-        detached: true,
-        elevationDiv: '#elevation-div',
-        followMarker: true,
-        zFollow: 15,
-        legend: false,
-        srcFolder: 'http://unpkg.com/@raruto/leaflet-elevation/src/',
-    }).addTo(data.map);
-
+    data.map = L.map('map', data.opts.map);
 }
-
 function loadGPX(fileNames) {
-    for (const originalFileName of fileNames) {
-        const fileName = `/tracks/${originalFileName}.gpx`;
-
-        data.elevationControl.load(fileName);
-    }
+    data.map.on('plugins_loaded', function (e) {
+        data.routes = L.gpxGroup(modifyFileNames(fileNames), {
+            points: data.points,
+            points_options: data.opts.points,
+            elevation: true,
+            elevation_options: data.opts.elevation,
+            legend: true,
+            distanceMarkers: true,
+        });
+        data.map.on('eledata_added eledata_clear', ({ type }) => {
+            let p = document.querySelector(".chart-placeholder");
+            if (p) {
+                p.style.display = type == 'eledata_added' ? 'none' : '';
+            }
+        });
+        data.routes.addTo(data.map);
+    });
 }
-
-
+function modifyFileNames(fileNames) {
+    // Use the map method to modify each file name
+    const modifiedFileNames = fileNames.map((originalFileName) => {
+        return `/tracks/${originalFileName}.gpx`;
+    });
+    return modifiedFileNames;
+}
 </script>
 
 <template>
     <div class="flex flex-col h-screen max-h-screen">
         <div id="map" class="h-full z-10"></div>
+        <div id="elevation-div" class="leaflet-control elevation">
+            <p class="chart-placeholder min-h-20 text-center font-sans italic opacity-60 text-sm">move mouse over a track...
+            </p>
+        </div>
     </div>
 </template>
 
+<style>
+.leaflet-right .leaflet-control-layers-list {
+    max-width: 250px;
+    max-height: 25vh;
+    overflow: auto;
+}
 
+.leaflet-tooltip {
+    font-weight: 700;
+}
+</style>
